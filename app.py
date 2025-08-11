@@ -1,10 +1,19 @@
+import pandas as pd
 import scipy.stats
 import streamlit as st
 import time
 
+# Estado persistente entre ejecuciones
+if 'experiment_no' not in st.session_state:
+    st.session_state['experiment_no'] = 0
+if 'df_experiment_results' not in st.session_state:
+    st.session_state['df_experiment_results'] = pd.DataFrame(
+        columns=['no', 'iteraciones', 'media']
+    )
+
 st.header('Lanzar una moneda')
 
-# gráfico inicia en 0.5
+# Gráfico con valor inicial 0.5
 chart = st.line_chart([0.5])
 
 def toss_coin(n):
@@ -26,6 +35,13 @@ start_button = st.button('Ejecutar')
 
 if start_button:
     st.write(f'Experimento con {number_of_trials} intentos en curso.')
+    st.session_state['experiment_no'] += 1
     mean = toss_coin(number_of_trials)
-    st.write(f'Media final: {mean:.3f}')
 
+    st.session_state['df_experiment_results'] = pd.concat([
+        st.session_state['df_experiment_results'],
+        pd.DataFrame([[st.session_state['experiment_no'], number_of_trials, mean]],
+                     columns=['no', 'iteraciones', 'media'])
+    ], axis=0).reset_index(drop=True)
+
+st.write(st.session_state['df_experiment_results'])
